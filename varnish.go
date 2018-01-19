@@ -74,7 +74,8 @@ type Callbackdata struct {
     vxid_parent      uint32
     reason           uint8
     marker           uint8
-    trxn_type        uint8
+    trx_type         uint8
+    tag              uint8
     length           uint16
     isbin            bool
     datastr          string
@@ -97,10 +98,10 @@ func _callback(vsl unsafe.Pointer, trans **C.struct_VSL_transaction, priv unsafe
             break
         }
         cbd.level         =uint16((*t).level)
-        cbd.vxid          =(*t).vxid
-        cbd.vxid_parent   =(*t).vxid_parent
-        cbd.reason        =(*t).reason
-        cbd.trx_type      =(*t)._type
+        cbd.vxid          =uint32((*t).vxid)
+        cbd.vxid_parent   =uint32((*t).vxid_parent)
+        cbd.reason        =uint8((*t).reason)
+        cbd.trx_type      =uint8((*t)._type)
 
         for {
             i:= C.VSL_Next((*t).c)
@@ -115,8 +116,8 @@ func _callback(vsl unsafe.Pointer, trans **C.struct_VSL_transaction, priv unsafe
             }
 
             rc      :=(*C.struct_gva_VSL_RECORD)(unsafe.Pointer((*t).c.rec.ptr))
-            cbd.length =rc.length
-            cbd.tag    =rc.tag
+            cbd.length =uint16(rc.length)
+            cbd.tag    =uint8(rc.tag)
             cbd.isbin  =(VSL_tagflags[cbd.tag] & C.SLT_F_BINARY) == 1
             
             if       rc.tagflag & 0x40000000 > 0{
@@ -128,13 +129,14 @@ func _callback(vsl unsafe.Pointer, trans **C.struct_VSL_transaction, priv unsafe
             }
 
             
-            if isbin{
+            if cbd.isbin{
                 cbd.databin=C.GoBytes(unsafe.Pointer(uintptr(unsafe.Pointer((*t).c.rec.ptr)) + uintptr(8)), C.int(cbd.length))
                 //fmt.Printf("lv:%d vxid:%d vxidp:%d reason:%d trx:%d thd:%d tag:%s data:%v isbin:%v\n",level,vxid,vxidp,reason,trx_type,thd_type,VSL_tags[tag],bin,isbin)
             }else{
                 cbd.datastr=C.GoStringN((((*C.char)(unsafe.Pointer(uintptr(unsafe.Pointer((*t).c.rec.ptr)) + uintptr(8))))), C.int(cbd.length -1))
                 //fmt.Printf("lv:%d vxid:%d vxidp:%d reason:%d trx:%d thd:%d tag:%s data:%s isbin:%v\n",level,vxid,vxidp,reason,trx_type,thd_type,VSL_tags[tag],data,isbin)
             }
+            fmt.Printf("lv:%d vxid:%d vxidp:%d reason:%d trx:%d thd:%d tag:%s data:%s bin:%v isbin:%v\n",cbd.level,cbd.vxid,cbd.vxid_parent,cbd.reason,cbd.trx_type,cbd.marker,VSL_tags[cbd.tag],cbd.datastr,cbd.databin,cbd.isbin)
             fmt.Println(cbd)
             
         }
