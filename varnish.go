@@ -49,10 +49,10 @@ int _callback(void *vsl, struct VSL_transaction **trans, void *priv);
 // 
 //
 struct gva_VSL_RECORD{
-	uint16_t length;
-	uint8_t  _pad;
-	uint8_t  tag;
-	uint32_t tagflag;
+    uint16_t length;
+    uint8_t  _pad;
+    uint8_t  tag;
+    uint32_t tagflag;
 };
 
 
@@ -114,10 +114,10 @@ func _callback(vsl unsafe.Pointer, trans **C.struct_VSL_transaction, priv unsafe
                 continue
             }
 
-            rc    :=(*C.struct_gva_VSL_RECORD)(unsafe.Pointer((*t).c.rec.ptr))
-            length:=rc.length
-            tag   :=rc.tag
-            isbin :=(VSL_tagflags[tag] & C.SLT_F_BINARY) == 1
+            rc      :=(*C.struct_gva_VSL_RECORD)(unsafe.Pointer((*t).c.rec.ptr))
+            length  :=rc.length
+            tag     :=rc.tag
+            isbin   :=(VSL_tagflags[tag] & C.SLT_F_BINARY) == 1
             thd_type:=0
             
             if       rc.tagflag & 0x40000000 > 0{
@@ -127,13 +127,16 @@ func _callback(vsl unsafe.Pointer, trans **C.struct_VSL_transaction, priv unsafe
             }
 
             var data string
+            var bin  []byte
+            
             if isbin{
-                data=C.GoStringN((((*C.char)(unsafe.Pointer(uintptr(unsafe.Pointer((*t).c.rec.ptr)) + uintptr(8))))),C.int(length))
+                bin=C.GoBytes(unsafe.Pointer(uintptr(unsafe.Pointer((*t).c.rec.ptr)) + uintptr(8)), C.int(length))
+                fmt.Printf("lv:%d vxid:%d vxidp:%d reason:%d trx:%d thd:%d tag:%s data:%v isbin:%v\n",level,vxid,vxidp,reason,trx_type,thd_type,VSL_tags[tag],bin,isbin)
             }else{
-                data=C.GoStringN((((*C.char)(unsafe.Pointer(uintptr(unsafe.Pointer((*t).c.rec.ptr)) + uintptr(8))))),C.int(length -1))
+                data=C.GoStringN((((*C.char)(unsafe.Pointer(uintptr(unsafe.Pointer((*t).c.rec.ptr)) + uintptr(8))))), C.int(length -1))
+                fmt.Printf("lv:%d vxid:%d vxidp:%d reason:%d trx:%d thd:%d tag:%s data:%s isbin:%v\n",level,vxid,vxidp,reason,trx_type,thd_type,VSL_tags[tag],data,isbin)
             }
             
-            fmt.Printf("lv:%d vxid:%d vxidp:%d reason:%d trx:%d thd:%d tag:%s data:%s isbin:%v\n",level,vxid,vxidp,reason,trx_type,thd_type,VSL_tags[tag],data,isbin)
         }
         tx+=sz
     }
