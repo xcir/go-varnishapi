@@ -67,21 +67,20 @@ import(
 var VSL_tags      []string
 var VSLQ_grouping []string
 var VSL_tagflags  []uint
-/*
+
 type Callbackdata struct {
-    level       uint16
-    vxid        uint32
-    vxid_parent uint32
-    reason      uint8
-    _type
-    transaction_type
-    length
-    isbin
-    datastr
-    databin
+    level            uint16
+    vxid             uint32
+    vxid_parent      uint32
+    reason           uint8
+    marker           uint8
+    trxn_type        uint8
+    length           uint16
+    isbin            bool
+    datastr          string
+    databin          []byte
 }
 
-*/
 //export _callback
 func _callback(vsl unsafe.Pointer, trans **C.struct_VSL_transaction, priv unsafe.Pointer) C.int {
 
@@ -91,17 +90,18 @@ func _callback(vsl unsafe.Pointer, trans **C.struct_VSL_transaction, priv unsafe
     if tx==0 {
         return 0
     }
-    
+    var cbd Callbackdata
     for {
         t := ((**C.struct_VSL_transaction)(unsafe.Pointer(tx)))
         if *t == nil {
             break
         }
-        level   :=(*t).level
-        vxid    :=(*t).vxid
-        vxidp   :=(*t).vxid_parent
-        reason  :=(*t).reason
-        trx_type:=(*t)._type
+        cbd.level         =uint16((*t).level)
+        cbd.vxid          =(*t).vxid
+        cbd.vxid_parent   =(*t).vxid_parent
+        cbd.reason        =(*t).reason
+        cbd.trx_type      =(*t)._type
+
         for {
             i:= C.VSL_Next((*t).c)
             if i < 0{
@@ -115,27 +115,27 @@ func _callback(vsl unsafe.Pointer, trans **C.struct_VSL_transaction, priv unsafe
             }
 
             rc      :=(*C.struct_gva_VSL_RECORD)(unsafe.Pointer((*t).c.rec.ptr))
-            length  :=rc.length
-            tag     :=rc.tag
-            isbin   :=(VSL_tagflags[tag] & C.SLT_F_BINARY) == 1
-            thd_type:=0
+            cbd.length =rc.length
+            cbd.tag    =rc.tag
+            cbd.isbin  =(VSL_tagflags[cbd.tag] & C.SLT_F_BINARY) == 1
             
             if       rc.tagflag & 0x40000000 > 0{
-                thd_type = 1
+                cbd.marker = 1
             }else if rc.tagflag & 0x80000000 > 0{
-                thd_type = 2
+                cbd.marker = 2
+            }else{
+                cbd.marker = 0
             }
 
-            var data string
-            var bin  []byte
             
             if isbin{
-                bin=C.GoBytes(unsafe.Pointer(uintptr(unsafe.Pointer((*t).c.rec.ptr)) + uintptr(8)), C.int(length))
-                fmt.Printf("lv:%d vxid:%d vxidp:%d reason:%d trx:%d thd:%d tag:%s data:%v isbin:%v\n",level,vxid,vxidp,reason,trx_type,thd_type,VSL_tags[tag],bin,isbin)
+                cbd.databin=C.GoBytes(unsafe.Pointer(uintptr(unsafe.Pointer((*t).c.rec.ptr)) + uintptr(8)), C.int(cbd.length))
+                //fmt.Printf("lv:%d vxid:%d vxidp:%d reason:%d trx:%d thd:%d tag:%s data:%v isbin:%v\n",level,vxid,vxidp,reason,trx_type,thd_type,VSL_tags[tag],bin,isbin)
             }else{
-                data=C.GoStringN((((*C.char)(unsafe.Pointer(uintptr(unsafe.Pointer((*t).c.rec.ptr)) + uintptr(8))))), C.int(length -1))
-                fmt.Printf("lv:%d vxid:%d vxidp:%d reason:%d trx:%d thd:%d tag:%s data:%s isbin:%v\n",level,vxid,vxidp,reason,trx_type,thd_type,VSL_tags[tag],data,isbin)
+                cbd.datastr=C.GoStringN((((*C.char)(unsafe.Pointer(uintptr(unsafe.Pointer((*t).c.rec.ptr)) + uintptr(8))))), C.int(cbd.length -1))
+                //fmt.Printf("lv:%d vxid:%d vxidp:%d reason:%d trx:%d thd:%d tag:%s data:%s isbin:%v\n",level,vxid,vxidp,reason,trx_type,thd_type,VSL_tags[tag],data,isbin)
             }
+            fmt.Println(cbd)
             
         }
         tx+=sz
