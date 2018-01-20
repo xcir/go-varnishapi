@@ -63,9 +63,9 @@ type Callbackdata struct {
     level            uint16
     vxid             uint32
     vxid_parent      uint32
-    reason           uint8
+    reason           uint
     marker           uint8
-    trx_type         uint8
+    trx_type         uint
     tag              uint8
     length           uint16
     isbin            bool
@@ -73,12 +73,19 @@ type Callbackdata struct {
     databin          []byte
 }
 
+type callback_line_f func(cbd Callbackdata) int
+type callback_f func() int
+
+var gva_cb_line  callback_line_f
+var gva_cb_vxid  callback_f
+var gva_cb_group callback_f
+
+
 //export _callback
 func _callback(vsl unsafe.Pointer, trans **C.struct_VSL_transaction, priv unsafe.Pointer) C.int {
 
     sz:= unsafe.Sizeof(trans)
     tx:= uintptr(unsafe.Pointer(trans))
-    fmt.Println(">>>>>>>>>>>")
     if tx==0 {
         return 0
     }
@@ -91,9 +98,8 @@ func _callback(vsl unsafe.Pointer, trans **C.struct_VSL_transaction, priv unsafe
         cbd.level         =uint16((*t).level)
         cbd.vxid          =uint32((*t).vxid)
         cbd.vxid_parent   =uint32((*t).vxid_parent)
-        cbd.reason        =uint8((*t).reason)
-        cbd.trx_type      =uint8((*t)._type)
-
+        cbd.reason        =uint((*t).reason)
+        cbd.trx_type      =uint((*t)._type)
         for {
             i:= C.VSL_Next((*t).c)
             if i < 0{
@@ -125,11 +131,18 @@ func _callback(vsl unsafe.Pointer, trans **C.struct_VSL_transaction, priv unsafe
             }else{
                 cbd.datastr=C.GoStringN((((*C.char)(unsafe.Pointer(uintptr(unsafe.Pointer((*t).c.rec.ptr)) + uintptr(8))))), C.int(cbd.length -1))
             }
-            fmt.Printf("lv:%d vxid:%d vxidp:%d reason:%d trx:%d thd:%d tag:%s data:%s bin:%v isbin:%v\n",cbd.level,cbd.vxid,cbd.vxid_parent,cbd.reason,cbd.trx_type,cbd.marker,VSL_tags[cbd.tag],cbd.datastr,cbd.databin,cbd.isbin)
-            fmt.Println(cbd)
-            
+            if gva_cb_line != nil{
+                gva_cb_line(cbd)
+            }
+
+        }
+        if gva_cb_vxid != nil{
+            gva_cb_vxid()
         }
         tx+=sz
+    }
+    if gva_cb_group != nil{
+        gva_cb_group()
     }
     
 
@@ -155,17 +168,34 @@ func init(){
 }
 
 
+
+func cbfl(cbd Callbackdata) int{
+  //fmt.Printf("lv:%d vxid:%d vxidp:%d reason:%d trx:%d thd:%d tag:%s data:%s bin:%v isbin:%v\n",cbd.level,cbd.vxid,cbd.vxid_parent,cbd.reason,cbd.trx_type,cbd.marker,VSL_tags[cbd.tag],cbd.datastr,cbd.databin,cbd.isbin)
+  fmt.Println(cbd)
+  return 0
+}
+func cbfv() int{
+  fmt.Println("vxid")
+  return 0
+}
+func cbfg() int{
+  fmt.Println("###########################")
+  return 0
+}
+
 func main(){
 
-    fmt.Println("Main")
     
 
     t:=&C.struct_vopt_spec{}
     vut:=C.VUT_Init(C.CString("VarnishVUTproc"), 0, (**C.char)(unsafe.Pointer(C.CString(""))), t)
 
     vut.dispatch_f = (*C.VSLQ_dispatch_f)(unsafe.Pointer(C._callback))
+    gva_cb_line  = cbfl
+    gva_cb_vxid  = cbfv
+    gva_cb_group = cbfg
 
-
+    C.VUT_Arg(vut,'g',C.CString("session"))
     C.VUT_Setup(vut)
     
     
