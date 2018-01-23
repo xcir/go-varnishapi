@@ -42,8 +42,8 @@ int _callback(void *vsl, struct VSL_transaction **trans, void *priv);
 // 
 //
 struct gva_VSL_RECORD{
-    uint32_t n0;
-    uint32_t n1;
+  uint32_t n0;
+  uint32_t n1;
 };
 
 
@@ -51,7 +51,7 @@ struct gva_VSL_RECORD{
 import "C"
 
 import(
-    "unsafe"
+  "unsafe"
 )
 
 var VSL_tags      []string
@@ -59,147 +59,147 @@ var VSLQ_grouping []string
 var VSL_tagflags  []uint
 
 type Callbackdata struct {
-    level            uint16
-    vxid             uint32
-    vxid_parent      uint32
-    reason           uint
-    marker           uint8
-    trx_type         uint
-    tag              uint8
-    length           uint16
-    isbin            bool
-    datastr          string
-    databin          []byte
+  level            uint16
+  vxid             uint32
+  vxid_parent      uint32
+  reason           uint
+  marker           uint8
+  trx_type         uint
+  tag              uint8
+  length           uint16
+  isbin            bool
+  datastr          string
+  databin          []byte
 }
 
-type callback_line_f func(cbd Callbackdata) int
-type callback_f func() int
+type Callback_line_f func(cbd Callbackdata) int
+type Callback_f func() int
 
-var gva_cb_line  callback_line_f
-var gva_cb_vxid  callback_f
-var gva_cb_group callback_f
+var gva_cb_line  Callback_line_f
+var gva_cb_vxid  Callback_f
+var gva_cb_group Callback_f
 
 var VUT *C.struct_VUT
 
 //export _callback
 func _callback(vsl unsafe.Pointer, trans **C.struct_VSL_transaction, priv unsafe.Pointer) C.int {
 
-    sz:= unsafe.Sizeof(trans)
-    tx:= uintptr(unsafe.Pointer(trans))
-    if tx==0 {
-        return 0
-    }
-    var cbd Callbackdata
-    for {
-        t := ((**C.struct_VSL_transaction)(unsafe.Pointer(tx)))
-        if *t == nil {
-            break
-        }
-        cbd.level         =uint16((*t).level)
-        cbd.vxid          =uint32((*t).vxid)
-        cbd.vxid_parent   =uint32((*t).vxid_parent)
-        cbd.reason        =uint((*t).reason)
-        cbd.trx_type      =uint((*t)._type)
-        for {
-            i:= C.VSL_Next((*t).c)
-            if i < 0{
-                return i
-            }
-            if i == 0{
-                break
-            }
-            if C.VSL_Match((*C.struct_VSL_data)(vsl), (*t).c) == 0 {
-                continue
-            }
-
-            rc        :=(*C.struct_gva_VSL_RECORD)(unsafe.Pointer((*t).c.rec.ptr))
-            cbd.length =uint16(rc.n0 & 0xffff)
-            cbd.tag    =uint8((rc.n0 & 0xff) << 24)
-            cbd.isbin  =(VSL_tagflags[cbd.tag] & C.SLT_F_BINARY) == 1
-            
-            if       rc.n1 & 0x40000000 > 0{
-                cbd.marker = 1
-            }else if rc.n1 & 0x80000000 > 0{
-                cbd.marker = 2
-            }else{
-                cbd.marker = 0
-            }
-            
-            if cbd.isbin{
-                cbd.databin=C.GoBytes(unsafe.Pointer(uintptr(unsafe.Pointer((*t).c.rec.ptr)) + uintptr(8)), C.int(cbd.length))
-            }else{
-                cbd.datastr=C.GoStringN((((*C.char)(unsafe.Pointer(uintptr(unsafe.Pointer((*t).c.rec.ptr)) + uintptr(8))))), C.int(cbd.length -1))
-            }
-            if gva_cb_line != nil{
-                gva_cb_line(cbd)
-            }
-        }
-        if gva_cb_vxid != nil{
-            gva_cb_vxid()
-        }
-        tx+=sz
-    }
-    if gva_cb_group != nil{
-        gva_cb_group()
-    }
-    
-
+  sz:= unsafe.Sizeof(trans)
+  tx:= uintptr(unsafe.Pointer(trans))
+  if tx==0 {
     return 0
+  }
+  var cbd Callbackdata
+  for {
+    t := ((**C.struct_VSL_transaction)(unsafe.Pointer(tx)))
+    if *t == nil {
+      break
+    }
+    cbd.level         =uint16((*t).level)
+    cbd.vxid          =uint32((*t).vxid)
+    cbd.vxid_parent   =uint32((*t).vxid_parent)
+    cbd.reason        =uint((*t).reason)
+    cbd.trx_type      =uint((*t)._type)
+    for {
+      i:= C.VSL_Next((*t).c)
+      if i < 0{
+        return i
+      }
+      if i == 0{
+        break
+      }
+      if C.VSL_Match((*C.struct_VSL_data)(vsl), (*t).c) == 0 {
+        continue
+      }
+
+      rc        :=(*C.struct_gva_VSL_RECORD)(unsafe.Pointer((*t).c.rec.ptr))
+      cbd.length =uint16(rc.n0 & 0xffff)
+      cbd.tag    =uint8((rc.n0 & 0xff) << 24)
+      cbd.isbin  =(VSL_tagflags[cbd.tag] & C.SLT_F_BINARY) == 1
+      
+      if       rc.n1 & 0x40000000 > 0{
+        cbd.marker = 1
+      }else if rc.n1 & 0x80000000 > 0{
+        cbd.marker = 2
+      }else{
+        cbd.marker = 0
+      }
+      
+      if cbd.isbin{
+        cbd.databin=C.GoBytes(unsafe.Pointer(uintptr(unsafe.Pointer((*t).c.rec.ptr)) + uintptr(8)), C.int(cbd.length))
+      }else{
+        cbd.datastr=C.GoStringN((((*C.char)(unsafe.Pointer(uintptr(unsafe.Pointer((*t).c.rec.ptr)) + uintptr(8))))), C.int(cbd.length -1))
+      }
+      if gva_cb_line != nil{
+        gva_cb_line(cbd)
+      }
+    }
+    if gva_cb_vxid != nil{
+        gva_cb_vxid()
+    }
+    tx+=sz
+  }
+  if gva_cb_group != nil{
+    gva_cb_group()
+  }
+  
+
+  return 0
 }
 
 func setArg(opts []string){
-    for i:=len(opts) -1; i>= 0; i--{
-        if opts[i][0] != '-'{
-            if i >0 && opts[i-1][0] == '-'{
-                C.VUT_Arg(VUT, C.int(opts[i-1][1]), C.CString(opts[i]))
-            }
-            i--
-            continue
-        }else{
-            C.VUT_Arg(VUT, C.int(opts[i][1]), C.CString(""))
-        }
+  for i:=len(opts) -1; i>= 0; i--{
+    if opts[i][0] != '-'{
+      if i >0 && opts[i-1][0] == '-'{
+        C.VUT_Arg(VUT, C.int(opts[i-1][1]), C.CString(opts[i]))
+      }
+      i--
+      continue
+    }else{
+      C.VUT_Arg(VUT, C.int(opts[i][1]), C.CString(""))
     }
+  }
 }
 
 func init(){
-    VSL_tags      = make([]string, len(&C.VSL_tags))
-    VSLQ_grouping = make([]string, len(&C.VSLQ_grouping))
-    VSL_tagflags  = make([]uint,   len(&C.VSL_tagflags))
+  VSL_tags      = make([]string, len(&C.VSL_tags))
+  VSLQ_grouping = make([]string, len(&C.VSLQ_grouping))
+  VSL_tagflags  = make([]uint,   len(&C.VSL_tagflags))
 
-    for i :=0; i< len(VSL_tags); i++{
-      VSL_tags[i] = C.GoString((&C.VSL_tags)[i])
-    }
-    for i :=0; i< len(VSLQ_grouping); i++{
-      VSLQ_grouping[i] = C.GoString((&C.VSLQ_grouping)[i])
-    }
-    for i :=0; i< len(VSL_tagflags); i++{
-      VSL_tagflags[i] = uint((&C.VSL_tagflags)[i])
-    }
+  for i :=0; i< len(VSL_tags); i++{
+    VSL_tags[i] = C.GoString((&C.VSL_tags)[i])
+  }
+  for i :=0; i< len(VSLQ_grouping); i++{
+    VSLQ_grouping[i] = C.GoString((&C.VSLQ_grouping)[i])
+  }
+  for i :=0; i< len(VSL_tagflags); i++{
+    VSL_tagflags[i] = uint((&C.VSL_tagflags)[i])
+  }
 }
 
 
-func LogInit(opts []string, cb_line callback_line_f, cb_vxid callback_f, cb_group callback_f) int{
-    t:=&C.struct_vopt_spec{}
-    VUT=C.VUT_Init(C.CString("VarnishVUTproc"), 0, (**C.char)(unsafe.Pointer(C.CString(""))), t)
+func LogInit(opts []string, cb_line Callback_line_f, cb_vxid Callback_f, cb_group Callback_f) int{
+  t:=&C.struct_vopt_spec{}
+  VUT=C.VUT_Init(C.CString("VarnishVUTproc"), 0, (**C.char)(unsafe.Pointer(C.CString(""))), t)
 
-    VUT.dispatch_f = (*C.VSLQ_dispatch_f)(unsafe.Pointer(C._callback))
-    if cb_line  != nil {gva_cb_line   = cb_line}
-    if cb_vxid  != nil {gva_cb_vxid   = cb_vxid}
-    if cb_group != nil {gva_cb_group  = cb_group}
-    if opts != nil {setArg(opts)}
-    C.VUT_Setup(VUT)
+  VUT.dispatch_f = (*C.VSLQ_dispatch_f)(unsafe.Pointer(C._callback))
+  if cb_line  != nil {gva_cb_line   = cb_line}
+  if cb_vxid  != nil {gva_cb_vxid   = cb_vxid}
+  if cb_group != nil {gva_cb_group  = cb_group}
+  if opts != nil {setArg(opts)}
+  C.VUT_Setup(VUT)
 
-    return 0
+  return 0
 }
 
 func LogRun(){
-    if VUT==nil {return}
-    C.VUT_Main(VUT)
+  if VUT==nil {return}
+  C.VUT_Main(VUT)
 }
 
 func LogFini(){
-    C.VUT_Fini(&VUT)
-    VUT = nil
+  C.VUT_Fini(&VUT)
+  VUT = nil
 }
 
 
