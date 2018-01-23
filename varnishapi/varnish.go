@@ -130,18 +130,12 @@ func _callback(vsl unsafe.Pointer, trans **C.struct_VSL_transaction, priv unsafe
       }else{
         cbd.datastr=C.GoStringN((((*C.char)(unsafe.Pointer(uintptr(unsafe.Pointer((*t).c.rec.ptr)) + uintptr(8))))), C.int(cbd.length -1))
       }
-      if gva_cb_line != nil{
-        gva_cb_line(cbd)
-      }
+      if gva_cb_line != nil {gva_cb_line(cbd)}
     }
-    if gva_cb_vxid != nil{
-        gva_cb_vxid()
-    }
+    if gva_cb_vxid != nil {gva_cb_vxid()}
     tx+=sz
   }
-  if gva_cb_group != nil{
-    gva_cb_group()
-  }
+  if gva_cb_group != nil {gva_cb_group()}
   
 
   return 0
@@ -191,12 +185,13 @@ func LogInit(opts []string, cb_line Callback_line_f, cb_vxid Callback_f, cb_grou
 
   return 0
 }
-
+func LogStop(){
+  VUT.sigint = 1
+}
 func LogRun(){
   if VUT==nil {return}
   C.VUT_Main(VUT)
 }
-
 func LogFini(){
   C.VUT_Fini(&VUT)
   VUT = nil

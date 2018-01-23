@@ -5,6 +5,9 @@ import "C"
 import(
     "fmt"
     "./varnishapi"
+    "os"
+    "os/signal"
+    "syscall"
 )
 
 func cbfl(cbd varnishapi.Callbackdata) int{
@@ -21,12 +24,21 @@ func cbfg() int{
   return 0
 }
 
+func handleCtrlC(c chan os.Signal) {
+    sig := <-c
+    fmt.Println("\nsignal: ", sig)
+    varnishapi.LogStop()
+}
+
 func main(){
+    c := make(chan os.Signal)
+    signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+    go handleCtrlC(c)
+    
     opts:=[]string{"-c","-g","request"}
 
     varnishapi.LogInit(opts,cbfl,cbfv,cbfg)
     varnishapi.LogRun()
-    fmt.Println("finish")
     varnishapi.LogFini()
-    
+    fmt.Println("Finish")
 }
