@@ -1,4 +1,4 @@
-package main
+package varnishapi
 /*
 #cgo pkg-config: varnishapi
 #cgo LDFLAGS: -lvarnishapi -lm
@@ -51,7 +51,6 @@ struct gva_VSL_RECORD{
 import "C"
 
 import(
-    "fmt"
     "unsafe"
 )
 
@@ -148,7 +147,7 @@ func _callback(vsl unsafe.Pointer, trans **C.struct_VSL_transaction, priv unsafe
     return 0
 }
 
-func SetArg(opts []string){
+func setArg(opts []string){
     for i:=len(opts) -1; i>= 0; i--{
         if opts[i][0] != '-'{
             if i >0 && opts[i-1][0] == '-'{
@@ -179,7 +178,7 @@ func init(){
 }
 
 
-func logInit(opts []string, cb_line callback_line_f, cb_vxid callback_f, cb_group callback_f) int{
+func LogInit(opts []string, cb_line callback_line_f, cb_vxid callback_f, cb_group callback_f) int{
     t:=&C.struct_vopt_spec{}
     VUT=C.VUT_Init(C.CString("VarnishVUTproc"), 0, (**C.char)(unsafe.Pointer(C.CString(""))), t)
 
@@ -187,42 +186,20 @@ func logInit(opts []string, cb_line callback_line_f, cb_vxid callback_f, cb_grou
     if cb_line  != nil {gva_cb_line   = cb_line}
     if cb_vxid  != nil {gva_cb_vxid   = cb_vxid}
     if cb_group != nil {gva_cb_group  = cb_group}
-    if opts != nil {SetArg(opts)}
+    if opts != nil {setArg(opts)}
     C.VUT_Setup(VUT)
 
     return 0
 }
 
-func logRun(){
+func LogRun(){
     if VUT==nil {return}
     C.VUT_Main(VUT)
 }
 
-func logFini(){
+func LogFini(){
     C.VUT_Fini(&VUT)
     VUT = nil
 }
 
-func cbfl(cbd Callbackdata) int{
-  //fmt.Printf("lv:%d vxid:%d vxidp:%d reason:%d trx:%d thd:%d tag:%s data:%s bin:%v isbin:%v\n",cbd.level,cbd.vxid,cbd.vxid_parent,cbd.reason,cbd.trx_type,cbd.marker,VSL_tags[cbd.tag],cbd.datastr,cbd.databin,cbd.isbin)
-  fmt.Println(cbd)
-  return 0
-}
-func cbfv() int{
-  fmt.Println("vxid")
-  return 0
-}
-func cbfg() int{
-  fmt.Println("###########################")
-  return 0
-}
 
-func main(){
-    opts:=[]string{"-c","-g","request"}
-
-    logInit(opts,cbfl,cbfv,cbfg)
-    logRun()
-    fmt.Println("finish")
-    logFini()
-    
-}
