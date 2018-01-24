@@ -19,6 +19,7 @@ package varnishapi
 #include "miniobj.h"
 
 int _callback(void *vsl, struct VSL_transaction **trans, void *priv);
+void _sighandler(int sig);
 
 //
 //
@@ -52,6 +53,7 @@ import "C"
 
 import(
   "unsafe"
+  "fmt"
 )
 
 var VSL_tags      []string
@@ -74,10 +76,12 @@ type Callbackdata struct {
 
 type Callback_line_f func(cbd Callbackdata) int
 type Callback_f func() int
+type Callback_sig_f func(sig int) int
 
 var gva_cb_line  Callback_line_f
 var gva_cb_vxid  Callback_f
 var gva_cb_group Callback_f
+var gva_cb_sig   Callback_sig_f
 
 var VUT *C.struct_VUT
 
@@ -141,6 +145,15 @@ func _callback(vsl unsafe.Pointer, trans **C.struct_VSL_transaction, priv unsafe
   return 0
 }
 
+//export _sighandler
+func _sighandler(sig C.int){
+  fmt.Println("handler")
+  if gva_cb_sig != nil {
+    sig = C.int(gva_cb_sig(int(sig)))
+  }
+  C.VUT_Signaled(VUT, sig)
+}
+
 func setArg(opts []string){
   for i:=len(opts) -1; i>= 0; i--{
     if opts[i][0] != '-'{
@@ -172,7 +185,7 @@ func init(){
 }
 
 
-func LogInit(opts []string, cb_line Callback_line_f, cb_vxid Callback_f, cb_group Callback_f) int{
+func LogInit(opts []string, cb_line Callback_line_f, cb_vxid Callback_f, cb_group Callback_f, cb_sig Callback_sig_f) int{
   t:=&C.struct_vopt_spec{}
   VUT=C.VUT_Init(C.CString("VarnishVUTproc"), 0, (**C.char)(unsafe.Pointer(C.CString(""))), t)
 
@@ -180,9 +193,10 @@ func LogInit(opts []string, cb_line Callback_line_f, cb_vxid Callback_f, cb_grou
   if cb_line  != nil {gva_cb_line   = cb_line}
   if cb_vxid  != nil {gva_cb_vxid   = cb_vxid}
   if cb_group != nil {gva_cb_group  = cb_group}
+  if cb_sig   != nil {gva_cb_sig  = cb_sig}
   if opts != nil {setArg(opts)}
   C.VUT_Setup(VUT)
-
+  C.VUT_Signal((*C.VUT_sighandler_f)(unsafe.Pointer(C._sighandler)));
   return 0
 }
 func LogStop(){
