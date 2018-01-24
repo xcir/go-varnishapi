@@ -53,6 +53,7 @@ import "C"
 
 import(
   "unsafe"
+  "strings"
 )
 
 var VSL_tags      []string
@@ -60,22 +61,22 @@ var VSLQ_grouping []string
 var VSL_tagflags  []uint
 
 type Callbackdata struct {
-  level            uint16
-  vxid             uint32
-  vxid_parent      uint32
-  reason           uint
-  marker           uint8
-  trx_type         uint
-  tag              uint8
-  length           uint16
-  isbin            bool
-  datastr          string
-  databin          []byte
+  Level       uint16
+  Vxid        uint32
+  Vxid_parent uint32
+  Reason      uint
+  Marker      uint8
+  Trx_type    uint
+  Tag         uint8
+  Length      uint16
+  Isbin       bool
+  Datastr     string
+  Databin     []byte
 }
 
 type Callback_line_f func(cbd Callbackdata) int
-type Callback_f func() int
-type Callback_sig_f func(sig int) int
+type Callback_f      func() int
+type Callback_sig_f  func(sig int) int
 
 var gva_cb_line  Callback_line_f
 var gva_cb_vxid  Callback_f
@@ -98,11 +99,11 @@ func _callback(vsl unsafe.Pointer, trans **C.struct_VSL_transaction, priv unsafe
     if *t == nil {
       break
     }
-    cbd.level         =uint16((*t).level)
-    cbd.vxid          =uint32((*t).vxid)
-    cbd.vxid_parent   =uint32((*t).vxid_parent)
-    cbd.reason        =uint((*t).reason)
-    cbd.trx_type      =uint((*t)._type)
+    cbd.Level       =uint16((*t).level)
+    cbd.Vxid        =uint32((*t).vxid)
+    cbd.Vxid_parent =uint32((*t).vxid_parent)
+    cbd.Reason      =uint((*t).reason)
+    cbd.Trx_type    =uint((*t)._type)
     for {
       i:= C.VSL_Next((*t).c)
       if i < 0{
@@ -116,22 +117,22 @@ func _callback(vsl unsafe.Pointer, trans **C.struct_VSL_transaction, priv unsafe
       }
 
       rc        :=(*C.struct_gva_VSL_RECORD)(unsafe.Pointer((*t).c.rec.ptr))
-      cbd.length =uint16(rc.n0 & 0xffff)
-      cbd.tag    =uint8((rc.n0 & 0xff) << 24)
-      cbd.isbin  =(VSL_tagflags[cbd.tag] & C.SLT_F_BINARY) == 1
+      cbd.Length =uint16(rc.n0 & 0xffff)
+      cbd.Tag    =uint8(rc.n0 >> 24)
+      cbd.Isbin  =(VSL_tagflags[cbd.Tag] & C.SLT_F_BINARY) == 1
       
       if       rc.n1 & 0x40000000 > 0{
-        cbd.marker = 1
+        cbd.Marker = 1
       }else if rc.n1 & 0x80000000 > 0{
-        cbd.marker = 2
+        cbd.Marker = 2
       }else{
-        cbd.marker = 0
+        cbd.Marker = 0
       }
       
-      if cbd.isbin{
-        cbd.databin=C.GoBytes(unsafe.Pointer(uintptr(unsafe.Pointer((*t).c.rec.ptr)) + uintptr(8)), C.int(cbd.length))
+      if cbd.Isbin{
+        cbd.Databin=C.GoBytes(unsafe.Pointer(uintptr(unsafe.Pointer((*t).c.rec.ptr)) + uintptr(8)), C.int(cbd.Length))
       }else{
-        cbd.datastr=C.GoStringN((((*C.char)(unsafe.Pointer(uintptr(unsafe.Pointer((*t).c.rec.ptr)) + uintptr(8))))), C.int(cbd.length -1))
+        cbd.Datastr=C.GoStringN((((*C.char)(unsafe.Pointer(uintptr(unsafe.Pointer((*t).c.rec.ptr)) + uintptr(8))))), C.int(cbd.Length -1))
       }
       if gva_cb_line != nil {gva_cb_line(cbd)}
     }
@@ -182,32 +183,61 @@ func init(){
   }
 }
 
-
 func LogInit(opts []string, cb_line Callback_line_f, cb_vxid Callback_f, cb_group Callback_f, cb_sig Callback_sig_f) int{
   if VUT!=nil {LogFini()}
-  t:=&C.struct_vopt_spec{}
-  VUT=C.VUT_Init(C.CString("VarnishVUTproc"), 0, (**C.char)(unsafe.Pointer(C.CString(""))), t)
+  t :=&C.struct_vopt_spec{}
+  VUT =C.VUT_Init(C.CString("VarnishVUTproc"), 0, (**C.char)(unsafe.Pointer(C.CString(""))), t)
 
   VUT.dispatch_f = (*C.VSLQ_dispatch_f)(unsafe.Pointer(C._callback))
   if cb_line  != nil {gva_cb_line  = cb_line}
   if cb_vxid  != nil {gva_cb_vxid  = cb_vxid}
   if cb_group != nil {gva_cb_group = cb_group}
   if cb_sig   != nil {gva_cb_sig   = cb_sig}
+
   if opts != nil {setArg(opts)}
   C.VUT_Setup(VUT)
   C.VUT_Signal((*C.VUT_sighandler_f)(unsafe.Pointer(C._sighandler)));
   return 0
 }
+
 func LogStop(){
   VUT.sigint = 1
 }
+
 func LogRun(){
   if VUT==nil {return}
   C.VUT_Main(VUT)
 }
+
 func LogFini(){
   C.VUT_Fini(&VUT)
   VUT = nil
 }
 
-
+type GVA_TAGVAR struct{
+  Key  string
+  Val  string
+  VKey string
+}
+func Tag2Var(tag uint8, data string)GVA_TAGVAR{
+  r :=GVA_TAGVAR{}
+  var ok bool
+  if r.Key, ok= _tags[VSL_tags[tag]]; !ok {
+    return r
+  }
+  t:=strings.SplitN(r.Key," ", 2)
+  r.VKey=strings.SplitN(t[len(t)-1],".",2)[0]
+  if r.Key==""{
+    return r
+  }else if(r.Key[len(r.Key)-1:] == "."){
+    t = strings.SplitN(data,": ",2)
+    r.Key = r.Key + t[0]
+    r.Val = ""
+    if len(t) > 1{
+      r.Val = t[1]
+    }
+  }else{
+    r.Val = data
+  }
+  return r
+}
