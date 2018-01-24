@@ -33,14 +33,19 @@ var rnames =map[int]string{
 }
 func cbfl(cbd varnishapi.Callbackdata) int{
   t:=varnishapi.Tag2Var(cbd.Tag,cbd.Datastr)
-  buf+=fmt.Sprintf("lv:%d vxid:%d vxidp:%d reason:%v trx:%v thd:%v tag:%s data:%s bin:%v isbin:%v key:%s\n",cbd.Level,cbd.Vxid,cbd.Vxid_parent,rnames[int(cbd.Reason)],tnames[int(cbd.Trx_type)],cbd.Marker,varnishapi.VSL_tags[cbd.Tag],cbd.Datastr,cbd.Databin,cbd.Isbin,t.Key)
+  buf+=fmt.Sprintf("%s lv:%d vxid:%d vxid_parent:%d tag:%s var:%s typs:%s isbin:%v data:",
+    strings.Repeat("-",int(cbd.Level)),cbd.Level,cbd.Vxid,cbd.Vxid_parent,varnishapi.VSL_tags[cbd.Tag],t.Key, cbd.Marker,cbd.Isbin)
+  if cbd.Isbin{
+    buf +=fmt.Sprintln(cbd.Databin)
+  }else{
+    buf +=fmt.Sprintln(cbd.Datastr)
+  }
   if headline.Vxid==0{
     headline = cbd
   }
   return 0
 }
 func cbfv() int{
-
   fmt.Printf("\n%s << %s >> %d\n",strings.Repeat("*",int(headline.Level)),tnames[int(headline.Trx_type)], headline.Vxid)
   fmt.Print(buf)
   buf=""
