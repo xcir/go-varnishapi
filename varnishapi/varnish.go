@@ -65,10 +65,9 @@ type Callbackdata struct {
   Vxid        uint32
   Vxid_parent uint32
   Reason      uint
-  Marker      uint8
+  Marker      string
   Trx_type    uint
   Tag         uint8
-  Length      uint16
   Isbin       bool
   Datastr     string
   Databin     []byte
@@ -96,6 +95,7 @@ func _callback(vsl unsafe.Pointer, trans **C.struct_VSL_transaction, priv unsafe
 
   sz:= unsafe.Sizeof(trans)
   tx:= uintptr(unsafe.Pointer(trans))
+  var length uint16
   if tx==0 {
     return 0
   }
@@ -123,22 +123,22 @@ func _callback(vsl unsafe.Pointer, trans **C.struct_VSL_transaction, priv unsafe
       }
 
       rc        :=(*C.struct_gva_VSL_RECORD)(unsafe.Pointer((*t).c.rec.ptr))
-      cbd.Length =uint16(rc.n0 & 0xffff)
+      length     =uint16(rc.n0 & 0xffff)
       cbd.Tag    =uint8(rc.n0 >> 24)
       cbd.Isbin  =(VSL_tagflags[cbd.Tag] & C.SLT_F_BINARY) == 1
       
       if       rc.n1 & 0x40000000 > 0{
-        cbd.Marker = 1
+        cbd.Marker = "c"
       }else if rc.n1 & 0x80000000 > 0{
-        cbd.Marker = 2
+        cbd.Marker = "b"
       }else{
-        cbd.Marker = 0
+        cbd.Marker = "-"
       }
       
       if cbd.Isbin{
-        cbd.Databin=C.GoBytes(unsafe.Pointer(uintptr(unsafe.Pointer((*t).c.rec.ptr)) + uintptr(8)), C.int(cbd.Length))
+        cbd.Databin=C.GoBytes(unsafe.Pointer(uintptr(unsafe.Pointer((*t).c.rec.ptr)) + uintptr(8)), C.int(length))
       }else{
-        cbd.Datastr=C.GoStringN((((*C.char)(unsafe.Pointer(uintptr(unsafe.Pointer((*t).c.rec.ptr)) + uintptr(8))))), C.int(cbd.Length -1))
+        cbd.Datastr=C.GoStringN((((*C.char)(unsafe.Pointer(uintptr(unsafe.Pointer((*t).c.rec.ptr)) + uintptr(8))))), C.int(length -1))
       }
       if gva_cb_line != nil {gva_cb_line(cbd)}
     }
