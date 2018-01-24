@@ -53,7 +53,6 @@ import "C"
 
 import(
   "unsafe"
-  "fmt"
 )
 
 var VSL_tags      []string
@@ -147,7 +146,6 @@ func _callback(vsl unsafe.Pointer, trans **C.struct_VSL_transaction, priv unsafe
 
 //export _sighandler
 func _sighandler(sig C.int){
-  fmt.Println("handler")
   if gva_cb_sig != nil {
     sig = C.int(gva_cb_sig(int(sig)))
   }
@@ -186,14 +184,15 @@ func init(){
 
 
 func LogInit(opts []string, cb_line Callback_line_f, cb_vxid Callback_f, cb_group Callback_f, cb_sig Callback_sig_f) int{
+  if VUT!=nil {LogFini()}
   t:=&C.struct_vopt_spec{}
   VUT=C.VUT_Init(C.CString("VarnishVUTproc"), 0, (**C.char)(unsafe.Pointer(C.CString(""))), t)
 
   VUT.dispatch_f = (*C.VSLQ_dispatch_f)(unsafe.Pointer(C._callback))
-  if cb_line  != nil {gva_cb_line   = cb_line}
-  if cb_vxid  != nil {gva_cb_vxid   = cb_vxid}
-  if cb_group != nil {gva_cb_group  = cb_group}
-  if cb_sig   != nil {gva_cb_sig  = cb_sig}
+  if cb_line  != nil {gva_cb_line  = cb_line}
+  if cb_vxid  != nil {gva_cb_vxid  = cb_vxid}
+  if cb_group != nil {gva_cb_group = cb_group}
+  if cb_sig   != nil {gva_cb_sig   = cb_sig}
   if opts != nil {setArg(opts)}
   C.VUT_Setup(VUT)
   C.VUT_Signal((*C.VUT_sighandler_f)(unsafe.Pointer(C._sighandler)));
