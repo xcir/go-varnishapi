@@ -21,27 +21,7 @@ package varnishapi
 int _callback(void *vsl, struct VSL_transaction **trans, void *priv);
 void _sighandler(int sig);
 
-//
-//
-// * (via vsl_int.h)
-// *
-// * Shared memory log format
-// *
-// * The log member points to an array of 32bit unsigned integers containing
-// * log records.
-// *
-// * Each logrecord consist of:
-// *	[n]		= ((type & 0xff) << 24) | (length & 0xffff) 
-// *	[n + 1]		= ((marker & 0x03) << 30) | (identifier & 0x3fffffff)
-// *	[n + 2] ... [m]	= content (NUL-terminated)
-// *
-// * Logrecords are NUL-terminated so that string functions can be run
-// * directly on the shmlog data.
-// *
-// * Notice that the constants in these macros cannot be changed without
-// * changing corresponding magic numbers in varnishd/cache/cache_shmlog.c
-// 
-//
+
 struct gva_VSL_RECORD{
   uint32_t n0;
   uint32_t n1;
@@ -53,7 +33,6 @@ import "C"
 
 import(
   "unsafe"
-  "strings"
 )
 
 var VSL_tags      []string
@@ -220,25 +199,3 @@ func LogFini(){
   VUT = nil
 }
 
-func Tag2Var(tag uint8, data string)GVA_TAGVAR{
-  r :=GVA_TAGVAR{}
-  var ok bool
-  if r.Key, ok= _tags[VSL_tags[tag]]; !ok {
-    return r
-  }
-  t:=strings.SplitN(r.Key," ", 2)
-  r.VKey=strings.SplitN(t[len(t)-1],".",2)[0]
-  if r.Key==""{
-    return r
-  }else if(r.Key[len(r.Key)-1:] == "."){
-    t = strings.SplitN(data,": ",2)
-    r.Key = r.Key + t[0]
-    r.Val = ""
-    if len(t) > 1{
-      r.Val = t[1]
-    }
-  }else{
-    r.Val = data
-  }
-  return r
-}
