@@ -46,7 +46,7 @@ func cbfl(cbd varnishapi.Callbackdata) int{
   return 0
 }
 func cbfv() int{
-  fmt.Printf("\n%s << %s >> %d\n",strings.Repeat("*",int(headline.Level)),tnames[int(headline.Trx_type)], headline.Vxid)
+  fmt.Printf("\n%s << %s:%s >> %d\n",strings.Repeat("*",int(headline.Level)),tnames[int(headline.Trx_type)],rnames[int(headline.Reason)], headline.Vxid)
   fmt.Print(buf)
   buf=""
   headline.Vxid=0
@@ -58,7 +58,6 @@ func cbfg() int{
 }
 
 func cbsig(sig int) int{
-  fmt.Println("hello")
   return sig
 }
 
@@ -69,5 +68,4 @@ func main(){
     varnishapi.LogInit(opts,cbfl,cbfv,cbfg,cbsig)
     varnishapi.LogRun()
     varnishapi.LogFini()
-    fmt.Println("Finish")
 }
