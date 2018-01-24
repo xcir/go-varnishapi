@@ -74,6 +74,12 @@ type Callbackdata struct {
   Databin     []byte
 }
 
+type GVA_TAGVAR struct{
+  Key  string
+  Val  string
+  VKey string
+}
+
 type Callback_line_f func(cbd Callbackdata) int
 type Callback_f      func() int
 type Callback_sig_f  func(sig int) int
@@ -214,11 +220,6 @@ func LogFini(){
   VUT = nil
 }
 
-type GVA_TAGVAR struct{
-  Key  string
-  Val  string
-  VKey string
-}
 func Tag2Var(tag uint8, data string)GVA_TAGVAR{
   r :=GVA_TAGVAR{}
   var ok bool
