@@ -245,10 +245,13 @@ func Stat()map[string]GVA_VSC_point{
   
   vsm:=C.VSM_New()
   vsc:=C.VSC_New()
-  C.VSM_Attach(vsm,2)
+  if C.VSM_Attach(vsm,2) > 0{
+    //err handle
+  }
   stats=make(map[string]GVA_VSC_point)
   C.VSC_Iter(vsc, vsm,(*C.VSC_iter_f)(unsafe.Pointer(C._stat_iter)), nil)
-
+//todo vsc_arg...etc まぁでもglobだからいらんかな
+  C.VSC_Destroy(&vsc, vsm)
   C.VSM_Destroy(&vsm)
   return stats
 }
