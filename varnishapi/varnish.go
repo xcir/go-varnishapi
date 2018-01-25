@@ -12,6 +12,7 @@ package varnishapi
 #include <stdint.h>
 #include "vapi/vsm.h"
 #include "vapi/vsl.h"
+#include "vapi/vsc.h"
 #include "vapi/voptget.h"
 #include "vas.h"
 #include "vdef.h"
@@ -21,6 +22,7 @@ package varnishapi
 int _callback(void *vsl, struct VSL_transaction **trans, void *priv);
 void _sighandler(int sig);
 
+int _stat_iter(void *priv, struct VSC_point *pt);
 
 struct gva_VSL_RECORD{
   uint32_t n0;
@@ -50,12 +52,6 @@ type Callbackdata struct {
   Isbin       bool
   Datastr     string
   Databin     []byte
-}
-
-type GVA_TAGVAR struct{
-  Key  string
-  Val  string
-  VKey string
 }
 
 type Callback_line_f func(cbd Callbackdata) int
@@ -152,7 +148,8 @@ func setArg(opts []string){
   }
 }
 
-func init(){
+func getVariables(){
+  if len(VSL_tags) > 0 {return}
   VSL_tags      = make([]string, len(&C.VSL_tags))
   VSLQ_grouping = make([]string, len(&C.VSLQ_grouping))
   VSL_tagflags  = make([]uint,   len(&C.VSL_tagflags))
@@ -166,9 +163,11 @@ func init(){
   for i :=0; i< len(VSL_tagflags); i++{
     VSL_tagflags[i] = uint((&C.VSL_tagflags)[i])
   }
+  
 }
 
 func LogInit(opts []string, cb_line Callback_line_f, cb_vxid Callback_f, cb_group Callback_f, cb_sig Callback_sig_f) int{
+  getVariables()
   if VUT!=nil {LogFini()}
   t :=&C.struct_vopt_spec{}
   VUT =C.VUT_Init(C.CString("VarnishVUTproc"), 0, (**C.char)(unsafe.Pointer(C.CString(""))), t)
@@ -197,5 +196,60 @@ func LogRun(){
 func LogFini(){
   C.VUT_Fini(&VUT)
   VUT = nil
+}
+
+//stat
+
+
+type GVA_VSC_level_desc struct {
+  Name    string
+  Label   string
+  Sdesc   string
+  Ldesc   string
+}
+type GVA_VSC_point struct {
+  Name       string
+  Val        uint64
+  Ctype      string
+  Semantics  int
+  Format     int
+  Sdesc      string
+  Ldesc      string
+  Level      GVA_VSC_level_desc
+}
+
+var stats map[string]GVA_VSC_point
+
+//export _stat_iter
+func _stat_iter(priv unsafe.Pointer, pt *C.struct_VSC_point) C.int {
+  stats[C.GoString(pt.name)] =GVA_VSC_point{
+  Name     : C.GoString(pt.name),
+  Val      : uint64(*pt.ptr),
+  Ctype    : C.GoString(pt.ctype),
+  Semantics: int(pt.semantics),
+  Format   : int(pt.format),
+  Sdesc    : C.GoString(pt.sdesc),
+  Ldesc    : C.GoString(pt.ldesc),
+  Level    : GVA_VSC_level_desc{
+             Name  : C.GoString(pt.level.name),
+             Label : C.GoString(pt.level.label),
+             Sdesc : C.GoString(pt.level.sdesc),
+             Ldesc : C.GoString(pt.level.ldesc),
+  },
+  
+  }
+  return 0
+}
+
+func Stat()map[string]GVA_VSC_point{
+  
+  vsm:=C.VSM_New()
+  vsc:=C.VSC_New()
+  C.VSM_Attach(vsm,2)
+  stats=make(map[string]GVA_VSC_point)
+  C.VSC_Iter(vsc, vsm,(*C.VSC_iter_f)(unsafe.Pointer(C._stat_iter)), nil)
+
+  C.VSM_Destroy(&vsm)
+  return stats
 }
 

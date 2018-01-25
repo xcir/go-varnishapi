@@ -63,8 +63,8 @@ func cbsig(sig int) int{
 
 func main(){
     
-    opts:=[]string{"-c","-g","session"}
 
+    opts:=[]string{"-c","-g","session"}
     varnishapi.LogInit(opts,cbfl,cbfv,cbfg,cbsig)
     varnishapi.LogRun()
     varnishapi.LogFini()

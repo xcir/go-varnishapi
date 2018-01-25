@@ -4,6 +4,12 @@ import(
   "strings"
 )
 
+type GVA_TAGVAR struct{
+  Key  string
+  Val  string
+  VKey string
+}
+
 func Tag2Var(tag uint8, data string)GVA_TAGVAR{
   r :=GVA_TAGVAR{}
   var ok bool
