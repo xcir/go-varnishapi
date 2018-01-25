@@ -12,7 +12,7 @@ import(
 
 
 var buf string = ""
-var headline varnishapi.Callbackdata
+var headline *varnishapi.Callbackdata
 var tnames =map[int]string{
   0:"unknown",
   1:"sess",
@@ -40,8 +40,8 @@ func cbfl(cbd varnishapi.Callbackdata) int{
   }else{
     buf +=fmt.Sprintln(cbd.Datastr)
   }
-  if headline.Vxid==0{
-    headline = cbd
+  if headline==nil{
+    headline = &cbd
   }
   return 0
 }
@@ -49,7 +49,7 @@ func cbfv() int{
   fmt.Printf("\n%s << %s:%s >> %d\n",strings.Repeat("*",int(headline.Level)),tnames[int(headline.Trx_type)],rnames[int(headline.Reason)], headline.Vxid)
   fmt.Print(buf)
   buf=""
-  headline.Vxid=0
+  headline = nil
   return 0
 }
 func cbfg() int{

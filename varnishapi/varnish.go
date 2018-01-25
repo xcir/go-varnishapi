@@ -1,4 +1,6 @@
 package varnishapi
+//todo
+//- エラー処理
 /*
 #cgo pkg-config: varnishapi
 #cgo LDFLAGS: -lvarnishapi -lm
@@ -35,6 +37,7 @@ import "C"
 
 import(
   "unsafe"
+//  "fmt"
 )
 
 var VSL_tags      []string
@@ -219,6 +222,8 @@ type GVA_VSC_point struct {
 }
 
 var stats map[string]GVA_VSC_point
+var vsm *C.struct_vsm
+var vsc *C.struct_vsc
 
 //export _stat_iter
 func _stat_iter(priv unsafe.Pointer, pt *C.struct_VSC_point) C.int {
@@ -231,28 +236,34 @@ func _stat_iter(priv unsafe.Pointer, pt *C.struct_VSC_point) C.int {
   Sdesc    : C.GoString(pt.sdesc),
   Ldesc    : C.GoString(pt.ldesc),
   Level    : GVA_VSC_level_desc{
-             Name  : C.GoString(pt.level.name),
-             Label : C.GoString(pt.level.label),
-             Sdesc : C.GoString(pt.level.sdesc),
-             Ldesc : C.GoString(pt.level.ldesc),
-  },
+               Name  : C.GoString(pt.level.name),
+               Label : C.GoString(pt.level.label),
+               Sdesc : C.GoString(pt.level.sdesc),
+               Ldesc : C.GoString(pt.level.ldesc),
+             },
   
   }
   return 0
 }
-func Stat()map[string]GVA_VSC_point{
-  
-  vsm:=C.VSM_New()
-  vsc:=C.VSC_New()
-  if C.VSM_Attach(vsm,2) > 0{
-    //err handle
+
+func StatInit()int{
+  if vsm != nil{StatClose()}
+  vsm=C.VSM_New()
+  vsc=C.VSC_New()
+  if C.VSM_Attach(vsm, 2) > 0{
+    StatClose()
+    return 0
   }
+  return 1
+}
+
+func StatGet()map[string]GVA_VSC_point{
   stats=make(map[string]GVA_VSC_point)
   C.VSC_Iter(vsc, vsm,(*C.VSC_iter_f)(unsafe.Pointer(C._stat_iter)), nil)
-//todo vsc_arg...etc まぁでもglobだからいらんかな
-//定期的にとれるようにしとくか迷う（毎回destroyもあれだし,init->get->closeかなぁ
-  C.VSC_Destroy(&vsc, vsm)
-  C.VSM_Destroy(&vsm)
   return stats
 }
 
+func StatClose(){
+  C.VSC_Destroy(&vsc, vsm)
+  C.VSM_Destroy(&vsm)
+}

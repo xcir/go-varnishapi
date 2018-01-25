@@ -8,9 +8,10 @@ import(
 )
 
 func main(){
-  s:=varnishapi.Stat()
-  for name :=range s{
-    fmt.Printf("%50s %20d\n",name,s[name].Val)
+  varnishapi.StatInit()
+  for name,v :=range varnishapi.StatGet(){
+    fmt.Printf("%50s %20d\n",name,v.Val)
   }
+  varnishapi.StatClose()
   
 }
