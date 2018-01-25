@@ -240,7 +240,6 @@ func _stat_iter(priv unsafe.Pointer, pt *C.struct_VSC_point) C.int {
   }
   return 0
 }
-
 func Stat()map[string]GVA_VSC_point{
   
   vsm:=C.VSM_New()
@@ -251,6 +250,7 @@ func Stat()map[string]GVA_VSC_point{
   stats=make(map[string]GVA_VSC_point)
   C.VSC_Iter(vsc, vsm,(*C.VSC_iter_f)(unsafe.Pointer(C._stat_iter)), nil)
 //todo vsc_arg...etc まぁでもglobだからいらんかな
+//定期的にとれるようにしとくか迷う（毎回destroyもあれだし,init->get->closeかなぁ
   C.VSC_Destroy(&vsc, vsm)
   C.VSM_Destroy(&vsm)
   return stats
