@@ -1,6 +1,9 @@
 package varnishapi
+
 //todo
 //- エラー処理
+
+
 /*
 #cgo pkg-config: varnishapi
 #cgo LDFLAGS: -lvarnishapi -lm
