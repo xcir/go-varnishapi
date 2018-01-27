@@ -40,7 +40,7 @@ import "C"
 
 import(
   "unsafe"
-//  "fmt"
+  "fmt"
 )
 
 var VSL_tags      []string
@@ -191,6 +191,7 @@ func LogInit(opts []string, cb_line Callback_line_f, cb_vxid Callback_f, cb_grou
 }
 
 func LogStop(){
+  if VUT==nil {return}
   VUT.sigint = 1
 }
 
@@ -200,8 +201,8 @@ func LogRun(){
 }
 
 func LogFini(){
+  if VUT==nil {return}
   C.VUT_Fini(&VUT)
-  VUT = nil
 }
 
 //stat
@@ -249,24 +250,27 @@ func _stat_iter(priv unsafe.Pointer, pt *C.struct_VSC_point) C.int {
   return 0
 }
 
-func StatInit()int{
+func StatInit()error{
   if vsm != nil{StatClose()}
   vsm=C.VSM_New()
   vsc=C.VSC_New()
   if C.VSM_Attach(vsm, 2) > 0{
+    err:= C.GoString(C.VSM_Error(vsm))
     StatClose()
-    return 0
+    return fmt.Errorf("%s", err)
   }
-  return 1
+  return nil
 }
 
 func StatGet()map[string]GVA_VSC_point{
+  if vsc==nil{return nil}
   stats=make(map[string]GVA_VSC_point)
   C.VSC_Iter(vsc, vsm,(*C.VSC_iter_f)(unsafe.Pointer(C._stat_iter)), nil)
   return stats
 }
 
 func StatClose(){
+  if vsc==nil{return}
   C.VSC_Destroy(&vsc, vsm)
   C.VSM_Destroy(&vsm)
 }
