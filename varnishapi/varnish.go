@@ -43,6 +43,7 @@ import(
   "fmt"
 )
 
+//log
 var VSL_tags      []string
 var VSLQ_grouping []string
 var VSL_tagflags  []uint
@@ -70,6 +71,34 @@ var gva_cb_group Callback_f
 var gva_cb_sig   Callback_sig_f
 
 var VUT *C.struct_VUT
+
+
+
+//stat
+type GVA_VSC_level_desc struct {
+  Name    string
+  Label   string
+  Sdesc   string
+  Ldesc   string
+}
+type GVA_VSC_point struct {
+  Name       string
+  Val        uint64
+  Ctype      string
+  Semantics  int
+  Format     int
+  Sdesc      string
+  Ldesc      string
+  Level      GVA_VSC_level_desc
+}
+
+var stats map[string]GVA_VSC_point
+var vsm *C.struct_vsm
+var vsc *C.struct_vsc
+
+//------------------------
+//log
+//------------------------
 
 //export _callback
 func _callback(vsl unsafe.Pointer, trans **C.struct_VSL_transaction, priv unsafe.Pointer) C.int {
@@ -205,29 +234,10 @@ func LogFini(){
   C.VUT_Fini(&VUT)
 }
 
+
+//------------------------
 //stat
-
-
-type GVA_VSC_level_desc struct {
-  Name    string
-  Label   string
-  Sdesc   string
-  Ldesc   string
-}
-type GVA_VSC_point struct {
-  Name       string
-  Val        uint64
-  Ctype      string
-  Semantics  int
-  Format     int
-  Sdesc      string
-  Ldesc      string
-  Level      GVA_VSC_level_desc
-}
-
-var stats map[string]GVA_VSC_point
-var vsm *C.struct_vsm
-var vsc *C.struct_vsc
+//------------------------
 
 //export _stat_iter
 func _stat_iter(priv unsafe.Pointer, pt *C.struct_VSC_point) C.int {
