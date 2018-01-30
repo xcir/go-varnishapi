@@ -1,9 +1,5 @@
 package varnishapi
 
-//todo
-//- エラー処理
-
-
 /*
 #cgo pkg-config: varnishapi
 #cgo LDFLAGS: -lvarnishapi -lm
@@ -33,7 +29,6 @@ struct gva_VSL_RECORD{
   uint32_t n0;
   uint32_t n1;
 };
-
 
 */
 import "C"
@@ -110,6 +105,7 @@ func _callback(vsl unsafe.Pointer, trans **C.struct_VSL_transaction, priv unsafe
     return 0
   }
   var cbd Callbackdata
+  cbexec :=false
   for {
     t := ((**C.struct_VSL_transaction)(unsafe.Pointer(tx)))
     if *t == nil {
@@ -120,6 +116,8 @@ func _callback(vsl unsafe.Pointer, trans **C.struct_VSL_transaction, priv unsafe
     cbd.Vxid_parent =uint32((*t).vxid_parent)
     cbd.Reason      =uint((*t).reason)
     cbd.Trx_type    =uint((*t)._type)
+
+    cbexec = false
     for {
       i:= C.VSL_Next((*t).c)
       if i < 0{
@@ -131,6 +129,7 @@ func _callback(vsl unsafe.Pointer, trans **C.struct_VSL_transaction, priv unsafe
       if C.VSL_Match((*C.struct_VSL_data)(vsl), (*t).c) == 0 {
         continue
       }
+      cbexec = true
 
       rc        :=(*C.struct_gva_VSL_RECORD)(unsafe.Pointer((*t).c.rec.ptr))
       length     =uint16(rc.n0 & 0xffff)
@@ -152,10 +151,10 @@ func _callback(vsl unsafe.Pointer, trans **C.struct_VSL_transaction, priv unsafe
       }
       if gva_cb_line != nil {gva_cb_line(cbd)}
     }
-    if gva_cb_vxid != nil {gva_cb_vxid()}
+    if gva_cb_vxid != nil && cbexec {gva_cb_vxid()}
     tx+=sz
   }
-  if gva_cb_group != nil {gva_cb_group()}
+  if gva_cb_group != nil && cbexec {gva_cb_group()}
   
 
   return 0
@@ -255,7 +254,6 @@ func _stat_iter(priv unsafe.Pointer, pt *C.struct_VSC_point) C.int {
                Sdesc : C.GoString(pt.level.sdesc),
                Ldesc : C.GoString(pt.level.ldesc),
              },
-  
   }
   return 0
 }

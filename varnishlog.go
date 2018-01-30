@@ -68,4 +68,6 @@ func main(){
     varnishapi.LogInit(opts,cbfl,cbfv,cbfg,cbsig)
     varnishapi.LogRun()
     varnishapi.LogFini()
+
+    fmt.Println("Finish")
 }
