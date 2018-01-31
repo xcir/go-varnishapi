@@ -259,12 +259,12 @@ func _stat_iter(priv unsafe.Pointer, pt *C.struct_VSC_point) C.int {
 }
 
 func StatInit()error{
-  if vsm != nil{StatClose()}
+  if vsm != nil{StatFini()}
   vsm=C.VSM_New()
   vsc=C.VSC_New()
   if C.VSM_Attach(vsm, 2) > 0{
     err:= C.GoString(C.VSM_Error(vsm))
-    StatClose()
+    StatFini()
     return fmt.Errorf("%s", err)
   }
   return nil
@@ -277,7 +277,7 @@ func StatGet()map[string]GVA_VSC_point{
   return stats
 }
 
-func StatClose(){
+func StatFini(){
   if vsc==nil{return}
   C.VSC_Destroy(&vsc, vsm)
   C.VSM_Destroy(&vsm)
