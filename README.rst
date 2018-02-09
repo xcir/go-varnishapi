@@ -34,3 +34,232 @@ Versioning
 DESCRIPTION
 ============
 Connect to libvarnish api by cgo
+
+
+Connect to VSL(VarnishLog)
+--------------------------------
+
+LogInit
+-------------------
+
+Prototype
+        ::
+
+                func LogInit(opts []string, cb_line Callback_line_f, cb_vxid Callback_f, cb_group Callback_f, cb_sig Callback_sig_f) int
+
+Parameter
+        ::
+
+                
+                opts     []string
+                cb_line  Callback_line_f
+                cb_vxid  Callback_f
+                cb_group Callback_f
+                cb_sig   Callback_sig_f
+
+Return value
+        ::
+
+                int
+                
+
+Description
+        ::
+
+                Open VSL(using VUT)
+Example
+        ::
+
+                XXXXX
+
+LogStop
+-------------------
+
+Prototype
+        ::
+
+                func LogStop()
+
+Parameter
+        ::
+
+                
+                n/a
+
+Return value
+        ::
+
+                n/a
+                
+
+Description
+        ::
+
+                Stop VUT loop
+Example
+        ::
+
+                XXXXX
+
+LogRun
+-------------------
+
+Prototype
+        ::
+
+                func LogRun()
+
+Parameter
+        ::
+
+                
+                n/a
+
+Return value
+        ::
+
+                n/a
+                
+
+Description
+        ::
+
+                Attach to VSL
+Example
+        ::
+
+                XXXXX
+
+
+LogFini
+-------------------
+
+Prototype
+        ::
+
+                func LogFini()
+
+Parameter
+        ::
+
+                
+                n/a
+
+Return value
+        ::
+
+                n/a
+                
+
+Description
+        ::
+
+                Finish VUT
+Example
+        ::
+
+                XXXXX
+
+
+
+Connect to VSC(VarnishStat)
+--------------------------------
+
+StatInit
+-------------------
+
+Prototype
+        ::
+
+                func StatInit()error
+
+Parameter
+        ::
+
+                
+                n/a
+
+Return value
+        ::
+
+                error
+                
+
+Description
+        ::
+
+                VSC initialize
+Example
+        ::
+
+                XXXXX
+
+StatGet
+-------------------
+
+Prototype
+        ::
+
+                func StatGet()map[string]GVA_VSC_point
+
+Parameter
+        ::
+
+                
+                n/a
+
+Return value
+        ::
+
+                map[string]GVA_VSC_point
+                
+
+Description
+        ::
+
+                Get VSC values.
+Example
+        ::
+
+                XXXXX
+
+StatFini
+-------------------
+
+Prototype
+        ::
+
+                func StatFini()
+
+Parameter
+        ::
+
+                
+                n/a
+
+Return value
+        ::
+
+                n/a
+                
+
+Description
+        ::
+
+                Finish VSC
+Example
+        ::
+
+                XXXXX
+
+
+COPYRIGHT
+===========
+
+go-varnishapi
+
+* Copyright (c) 2018 Shohei Tanaka(@xcir)
+
+
+
+

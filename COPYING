@@ -1,0 +1,2 @@
+go-varnishapi, Connect to libvarnish api by cgo:
+Copyright (c) 2018 Shohei Tanaka(@xcir)
