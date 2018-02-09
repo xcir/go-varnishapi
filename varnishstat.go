@@ -4,7 +4,7 @@ import "C"
 
 import(
     "fmt"
-    "./varnishapi"
+    "./head"
 )
 
 func main(){
