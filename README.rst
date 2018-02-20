@@ -25,6 +25,18 @@ https://github.com/xcir/python-varnishapi/
 
 Installation
 ============
+
+head
+        ::
+
+                go get github.com/xcir/go-varnishapi/head
+
+For VARNISHAPI20(Varnish5.2.x)
+        ::
+
+                go get github.com/xcir/go-varnishapi/varnishapi20
+
+
 ---
 
 Versioning
