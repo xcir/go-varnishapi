@@ -5,7 +5,7 @@ import "C"
 import(
     "fmt"
     "strings"
-    "./head"
+    "../head"
 )
 
 

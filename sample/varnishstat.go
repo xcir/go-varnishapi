@@ -4,7 +4,7 @@ import "C"
 
 import(
     "fmt"
-    "./head"
+    "../head"
 )
 
 func main(){
