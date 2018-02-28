@@ -8,11 +8,9 @@ import(
     "../head"
 )
 
-
-
-
 var buf string = ""
 var headline *varnishapi.Callbackdata
+
 var tnames =map[int]string{
   0:"unknown",
   1:"sess",
@@ -20,6 +18,7 @@ var tnames =map[int]string{
   3:"bereq",
   4:"raw",
 }
+
 var rnames =map[int]string{
   0:"unknown",
   1:"HTTP/1",
@@ -31,6 +30,7 @@ var rnames =map[int]string{
   7:"bgfetch",
   8:"pipe",
 }
+
 func cbfLine(cbd varnishapi.Callbackdata) int{
   t:=varnishapi.Tag2Var(cbd.Tag,cbd.Datastr)
   buf+=fmt.Sprintf("%s lv:%d vxid:%d vxid_parent:%d tag:%s var:%s typs:%s isbin:%v data:",
@@ -45,6 +45,7 @@ func cbfLine(cbd varnishapi.Callbackdata) int{
   }
   return 0
 }
+
 func cbfVxid() int{
   fmt.Printf("\n%s << %s:%s >> %d\n", strings.Repeat("*", int(headline.Level)), tnames[int(headline.Trx_type)], rnames[int(headline.Reason)], headline.Vxid)
   fmt.Print(buf)
@@ -52,6 +53,7 @@ func cbfVxid() int{
   headline = nil
   return 0
 }
+
 func cbfGroup() int{
   fmt.Println(strings.Repeat("-", 100))
   return 0
@@ -62,12 +64,8 @@ func cbSignal(sig int) int{
 }
 
 func main(){
-    
-
     opts:=[]string{"-c","-g","session"}
     varnishapi.LogInit(opts, cbfLine, cbfVxid, cbfGroup, cbSignal)
     varnishapi.LogRun()
     varnishapi.LogFini()
-
-    fmt.Println("Finish")
 }
