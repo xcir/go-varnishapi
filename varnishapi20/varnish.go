@@ -15,7 +15,6 @@ package varnishapi
 #include "vapi/vsl.h"
 #include "vapi/vsc.h"
 #include "vapi/voptget.h"
-#include "vas.h"
 #include "vdef.h"
 #include "vut.h"
 #include "miniobj.h"
@@ -122,7 +121,7 @@ func _callback(vsl unsafe.Pointer, trans **C.struct_VSL_transaction, priv unsafe
     for {
       i:= C.VSL_Next((*t).c)
       if i < 0{
-        return i
+        return C.int(i)
       }
       if i == 0{
         break
