@@ -134,7 +134,7 @@ func _callback(vsl unsafe.Pointer, trans **C.struct_VSL_transaction, priv unsafe
       rc        :=(*C.struct_gva_VSL_RECORD)(unsafe.Pointer((*t).c.rec.ptr))
       length     =uint16(rc.n0 & 0xffff)
       cbd.Tag    =uint8(rc.n0 >> 24)
-      cbd.Isbin  =(VSL_tagflags[cbd.Tag] & C.SLT_F_BINARY) == 1
+      cbd.Isbin  =(VSL_tagflags[cbd.Tag] & C.SLT_F_BINARY) > 0
       
       if       rc.n1 & 0x40000000 > 0{
         cbd.Marker = "c"
