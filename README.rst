@@ -13,8 +13,8 @@ Connect to libvarnish api by cgo
 
 :Author: Shohei Tanaka(@xcir)
 :Date: xxxx-xx-xx
-:Version: 52.trunk
-:Support Varnish Version: 5.2.x
+:Version: 60.trunk
+:Support Varnish Version: 5.2.x 6.0.x
 :Manual section: 3
 
 For Python(ctypes)
@@ -31,10 +31,15 @@ head
 
                 go get github.com/xcir/go-varnishapi/head
 
-For VARNISHAPI20(Varnish5.2.x)
+For Varnish6.0.x
         ::
 
-                go get github.com/xcir/go-varnishapi/varnishapi20
+                go get github.com/xcir/go-varnishapi/varnish60
+
+For Varnish5.2.x
+        ::
+
+                go get github.com/xcir/go-varnishapi/varnish52
 
 
 ---
