@@ -130,7 +130,8 @@ func _callback(vsl unsafe.Pointer, trans **C.struct_VSL_transaction, priv unsafe
 		return 0
 	}
 	var cbd Callbackdata
-	cbexec := false
+	cbexec_v := false
+	cbexec_g := false
 	for {
 		t := ((**C.struct_VSL_transaction)(unsafe.Pointer(tx)))
 		if *t == nil {
@@ -142,7 +143,7 @@ func _callback(vsl unsafe.Pointer, trans **C.struct_VSL_transaction, priv unsafe
 		cbd.Reason = uint((*t).reason)
 		cbd.Trx_type = uint((*t)._type)
 
-		cbexec = false
+		cbexec_v = false
 		for {
 			i := C.VSL_Next((*t).c)
 			if i < 0 {
@@ -154,7 +155,8 @@ func _callback(vsl unsafe.Pointer, trans **C.struct_VSL_transaction, priv unsafe
 			if C.VSL_Match((*C.struct_VSL_data)(vsl), (*t).c) == 0 {
 				continue
 			}
-			cbexec = true
+			cbexec_v = true
+			cbexec_g = true
 
 			rc := (*C.struct_gva_VSL_RECORD)(unsafe.Pointer((*t).c.rec.ptr))
 			length = uint16(rc.n0 & 0xffff)
@@ -178,12 +180,12 @@ func _callback(vsl unsafe.Pointer, trans **C.struct_VSL_transaction, priv unsafe
 				gva_cb_line(cbd)
 			}
 		}
-		if gva_cb_vxid != nil && cbexec {
+		if gva_cb_vxid != nil && cbexec_v {
 			gva_cb_vxid()
 		}
 		tx += sz
 	}
-	if gva_cb_group != nil && cbexec {
+	if gva_cb_group != nil && cbexec_g {
 		gva_cb_group()
 	}
 
