@@ -64,17 +64,25 @@ LogInit
 Prototype
         ::
 
-                func LogInit(opts []string, cb_line Callback_line_f, cb_vxid Callback_f, cb_group Callback_f, cb_sig Callback_sig_f) int
+                func LogInit(opts []string, cb_line Callback_line_f, cb_vxid Callback_f, cb_group Callback_f, cb_sig Callback_sig_f) error
 
 Parameter
         ::
 
                 
                 opts     []string
-                cb_line  Callback_line_f
-                cb_vxid  Callback_f
-                cb_group Callback_f
-                cb_sig   Callback_sig_f
+                cb_line  Callback_line_f callback function per line
+                cb_vxid  Callback_f      callback function per vxid(call per line, if group option set to raw)
+                cb_group Callback_f      callback function per group(raw, vxid, request, session)
+                cb_sig   Callback_sig_f  callback signal handler
+
+===================== ======== ======== =========== ===========
+callbacktype \\ group raw      vxid     request     session
+===================== ======== ======== =========== ===========
+cb_line               per line per line per line    per line
+cb_vxi                per line per vxid per vxid    per vxid
+cb_grop               per line per vxid per request per session
+===================== ======== ======== =========== ===========
 
 Return value
         ::
@@ -89,7 +97,25 @@ Description
 Example
         ::
 
-                XXXXX
+                func cbfLine(cbd varnishapi.Callbackdata) {
+                	fmt.Println(cbd)
+                }
+                func cbfVxid() {
+                	fmt.Println(strings.Repeat("-", 20))
+                }
+                func cbfGroup() {
+                	fmt.Println(strings.Repeat("/", 20))
+                }
+                func cbSignal(sig int) int {
+                	//Ignore all signal, if set return 0.
+                	return sig
+                }
+                func main() {
+                	opts := []string{"-c", "-g", "session"}
+                	varnishapi.LogInit(opts, cbfLine, cbfVxid, cbfGroup, cbSignal)
+                	defer varnishapi.LogFini()
+                	varnishapi.LogRun()
+                }
 
 LogStop
 -------------------
