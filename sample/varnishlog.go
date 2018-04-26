@@ -31,8 +31,7 @@ var rnames = map[int]string{
 	7: "bgfetch",
 	8: "pipe",
 }
-
-func cbfLine(cbd varnishapi.Callbackdata) int {
+func cbfLine(cbd varnishapi.Callbackdata) {
 	t := varnishapi.Tag2Var(cbd.Tag, cbd.Datastr)
 	buf += fmt.Sprintf("%s lv:%d vxid:%d vxid_parent:%d tag:%s var:%s typs:%s isbin:%v data:",
 		strings.Repeat("-", int(cbd.Level)), cbd.Level, cbd.Vxid, cbd.Vxid_parent, varnishapi.VSL_tags[cbd.Tag], t.Key, cbd.Marker, cbd.Isbin)
@@ -44,20 +43,17 @@ func cbfLine(cbd varnishapi.Callbackdata) int {
 	if headline == nil {
 		headline = &cbd
 	}
-	return 0
 }
 
-func cbfVxid() int {
+func cbfVxid() {
 	fmt.Printf("\n%s << %s:%s >> %d\n", strings.Repeat("*", int(headline.Level)), tnames[int(headline.Trx_type)], rnames[int(headline.Reason)], headline.Vxid)
 	fmt.Print(buf)
 	buf = ""
 	headline = nil
-	return 0
 }
 
-func cbfGroup() int {
+func cbfGroup() {
 	fmt.Println(strings.Repeat("-", 100))
-	return 0
 }
 
 func cbSignal(sig int) int {

@@ -82,8 +82,8 @@ type Callbackdata struct {
 	Databin     []byte
 }
 
-type Callback_line_f func(cbd Callbackdata) int
-type Callback_f func() int
+type Callback_line_f func(cbd Callbackdata)
+type Callback_f func()
 type Callback_sig_f func(sig int) int
 
 var gva_cb_line Callback_line_f
