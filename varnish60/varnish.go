@@ -231,13 +231,17 @@ func getVariables() {
 
 }
 
-func LogInit(opts []string, cb_line Callback_line_f, cb_vxid Callback_f, cb_group Callback_f, cb_sig Callback_sig_f) int {
+func LogInit(opts []string, cb_line Callback_line_f, cb_vxid Callback_f, cb_group Callback_f, cb_sig Callback_sig_f) error {
 	getVariables()
 	if VUT != nil {
 		LogFini()
 	}
 	t := &C.struct_vopt_spec{}
 	VUT = C.VUT_Init(C.CString("VarnishVUTproc"), 0, (**C.char)(unsafe.Pointer(C.CString(""))), t)
+
+	if VUT == nil {
+		return fmt.Errorf("fail VUT_Init")
+	}
 
 	VUT.dispatch_f = (*C.VSLQ_dispatch_f)(unsafe.Pointer(C._callback))
 	if cb_line != nil {
@@ -258,7 +262,7 @@ func LogInit(opts []string, cb_line Callback_line_f, cb_vxid Callback_f, cb_grou
 	}
 	C.VUT_Setup(VUT)
 	C.VUT_Signal((*C.VUT_sighandler_f)(unsafe.Pointer(C._sighandler)))
-	return 0
+	return nil
 }
 
 func LogStop() {
