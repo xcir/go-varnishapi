@@ -66,6 +66,6 @@ func cbSignal(sig int) int {
 func main() {
 	opts := []string{"-c", "-g", "session"}
 	varnishapi.LogInit(opts, cbfLine, cbfVxid, cbfGroup, cbSignal)
+	defer varnishapi.LogFini()
 	varnishapi.LogRun()
-	varnishapi.LogFini()
 }
