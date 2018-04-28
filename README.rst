@@ -48,7 +48,7 @@ Versioning
 ============
 [varnish-version].[library-version]
 
-50.18 is v18 for Varnish5.0.x
+60.1 is v1 for Varnish6.0.x
 
 DESCRIPTION
 ============
