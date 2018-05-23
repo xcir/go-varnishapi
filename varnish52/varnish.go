@@ -67,6 +67,7 @@ import (
 
 //log
 var VSL_tags []string
+var VSL_tags_rev map[string]int
 var VSLQ_grouping []string
 var VSL_tagflags []uint
 
@@ -219,11 +220,13 @@ func getVariables() {
 		return
 	}
 	VSL_tags = make([]string, len(&C.VSL_tags))
+	VSL_tags_rev = make(map[string]int, len(&C.VSL_tags))
 	VSLQ_grouping = make([]string, len(&C.VSLQ_grouping))
 	VSL_tagflags = make([]uint, len(&C.VSL_tagflags))
 
 	for i := 0; i < len(VSL_tags); i++ {
 		VSL_tags[i] = C.GoString((&C.VSL_tags)[i])
+		VSL_tags_rev[C.GoString((&C.VSL_tags)[i])] = i
 	}
 	for i := 0; i < len(VSLQ_grouping); i++ {
 		VSLQ_grouping[i] = C.GoString((&C.VSLQ_grouping)[i])
