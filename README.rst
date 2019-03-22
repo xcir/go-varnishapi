@@ -14,8 +14,8 @@ Connect to libvarnish api by cgo
 
 :Author: Shohei Tanaka(@xcir)
 :Date: xxxx-xx-xx
-:Version: 60.trunk
-:Support Varnish Version: 5.2.x 6.0.x 6.1.x
+:Version: 62.trunk
+:Support Varnish Version: 5.2.x 6.0.x 6.1.x 6.2.x
 :Manual section: 3
 
 For Python(ctypes)
