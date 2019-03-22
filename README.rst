@@ -32,7 +32,12 @@ head
 
                 go get github.com/xcir/go-varnishapi/head
 
-For Varnish6.0.x
+For Varnish6.2.x
+        ::
+
+                go get github.com/xcir/go-varnishapi/varnish62
+
+For Varnish6.0.x 6.1.x
         ::
 
                 go get github.com/xcir/go-varnishapi/varnish60
